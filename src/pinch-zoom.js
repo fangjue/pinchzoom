@@ -666,13 +666,31 @@ var definePinchZoom = function () {
             var self = this;
             detectGestures(this.container, this);
 
-            window.addEventListener('resize', this.update.bind(this));
+            this.boundUpdate = this.update.bind(this);
+
+            window.addEventListener('resize', this.boundUpdate);
             Array.from(this.el.querySelectorAll('img')).forEach(function(imgEl) {
-              imgEl.addEventListener('load', self.update.bind(self));
+              imgEl.addEventListener('load', self.boundUpdate);
             });
 
             if (this.el.nodeName === 'IMG') {
-              this.el.addEventListener('load', this.update.bind(this));
+              this.el.addEventListener('load', this.boundUpdate);
+            }
+        },
+
+        /**
+         * Unbind event listeners.
+         * 
+         * NOTE: Currently touchevents are not yet unbound.
+         */
+        unbindEvents: function () {
+            window.removeEventListener('resize', this.boundUpdate);
+            Array.from(this.el.querySelectorAll('img')).forEach(function(imgEl) {
+                imgEl.removeEventListener('load', this.boundUpdate);
+            }.bind(this));
+
+            if (this.el.nodeName === 'IMG') {
+                this.el.removeEventListener('load', this.boundUpdate);
             }
         },
 
