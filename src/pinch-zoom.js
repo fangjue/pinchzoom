@@ -664,7 +664,7 @@ var definePinchZoom = function () {
          */
         bindEvents: function () {
             var self = this;
-            detectGestures(this.container, this);
+            this.gestureDetector = new GestureDetector(this.container, this);
 
             this.boundUpdate = this.update.bind(this);
 
@@ -680,10 +680,10 @@ var definePinchZoom = function () {
 
         /**
          * Unbind event listeners.
-         * 
-         * NOTE: Currently touchevents are not yet unbound.
          */
         unbindEvents: function () {
+            this.gestureDetector.destroy();
+
             window.removeEventListener('resize', this.boundUpdate);
             Array.from(this.el.querySelectorAll('img')).forEach(function(imgEl) {
                 imgEl.removeEventListener('load', this.boundUpdate);
@@ -780,7 +780,7 @@ var definePinchZoom = function () {
         }
     };
 
-    var detectGestures = function (el, target) {
+    var GestureDetector = function (el, target) {
         var interaction = null,
             fingers = 0,
             lastTouchStart = null,
@@ -876,51 +876,60 @@ var definePinchZoom = function () {
                     lastTouchStart = time;
                 }
             },
-            firstMove = true;
+            firstMove = true,
 
-        el.addEventListener('touchstart', function (event) {
-            if(target.enabled) {
-                firstMove = true;
-                fingers = event.touches.length;
-                detectDoubleTap(event);
-            }
-        }, { passive: false });
-
-        el.addEventListener('touchmove', function (event) {
-            if(target.enabled && !target.isDoubleTap) {
-                if (firstMove) {
-                    updateInteraction(event);
-                    if (interaction) {
-                        cancelEvent(event);
-                    }
-                    startTouches = targetTouches(event.touches);
-                } else {
-                    switch (interaction) {
-                        case 'zoom':
-                            if (startTouches.length == 2 && event.touches.length == 2) {
-                                target.handleZoom(event, calculateScale(startTouches, targetTouches(event.touches)));
-                            }
-                            break;
-                        case 'drag':
-                            target.handleDrag(event);
-                            break;
-                    }
-                    if (interaction) {
-                        cancelEvent(event);
-                        target.update();
-                    }
+            onTouchStart = function (event) {
+                if(target.enabled) {
+                    firstMove = true;
+                    fingers = event.touches.length;
+                    detectDoubleTap(event);
                 }
+            },
+            onTouchMove = function (event) {
+                if(target.enabled && !target.isDoubleTap) {
+                    if (firstMove) {
+                        updateInteraction(event);
+                        if (interaction) {
+                            cancelEvent(event);
+                        }
+                        startTouches = targetTouches(event.touches);
+                    } else {
+                        switch (interaction) {
+                            case 'zoom':
+                                if (startTouches.length == 2 && event.touches.length == 2) {
+                                    target.handleZoom(event, calculateScale(startTouches, targetTouches(event.touches)));
+                                }
+                                break;
+                            case 'drag':
+                                target.handleDrag(event);
+                                break;
+                        }
+                        if (interaction) {
+                            cancelEvent(event);
+                            target.update();
+                        }
+                    }
+    
+                    firstMove = false;
+                }
+            },
+            onTouchEnd = function (event) {
+                if(target.enabled) {
+                    fingers = event.touches.length;
+                    updateInteraction(event);
+                }
+            };
+        el.addEventListener('touchstart', onTouchStart, { passive: false });
 
-                firstMove = false;
-            }
-        }, { passive: false });
+        el.addEventListener('touchmove', onTouchMove, { passive: false });
 
-        el.addEventListener('touchend', function (event) {
-            if(target.enabled) {
-                fingers = event.touches.length;
-                updateInteraction(event);
-            }
-        });
+        el.addEventListener('touchend', onTouchEnd);
+
+        this.destroy = function() {
+            el.removeEventListener('touchstart', onTouchStart, { passive: false });
+            el.removeEventListener('touchmove', onTouchMove, { passive: false });
+            el.removeEventListener('touchend', onTouchEnd);
+        };
     };
 
     return PinchZoom;
