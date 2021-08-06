@@ -918,17 +918,34 @@ var definePinchZoom = function () {
                     fingers = event.touches.length;
                     updateInteraction(event);
                 }
+            },
+            onMouseDown = function(event) {
+                event.touches = [event];
+                onTouchStart(event);
+            },
+            onMouseMove = function(event) {
+                event.touches = [event];
+                onTouchMove(event);
+            },
+            onMouseUp = function(event) {
+                event.touches = [];
+                onTouchEnd(event);
             };
+
         el.addEventListener('touchstart', onTouchStart, { passive: false });
-
         el.addEventListener('touchmove', onTouchMove, { passive: false });
-
         el.addEventListener('touchend', onTouchEnd);
+        el.addEventListener('mousedown', onMouseDown, { passive: false });
+        el.addEventListener('mousemove', onMouseMove, { passive: false });
+        el.addEventListener('mouseup', onMouseUp);
 
         this.destroy = function() {
             el.removeEventListener('touchstart', onTouchStart, { passive: false });
             el.removeEventListener('touchmove', onTouchMove, { passive: false });
             el.removeEventListener('touchend', onTouchEnd);
+            el.removeEventListener('mousedown', onMouseDown, { passive: false });
+            el.removeEventListener('mousemove', onMouseMove, { passive: false });
+            el.removeEventListener('mouseup', onMouseUp);
         };
     };
 
