@@ -877,8 +877,19 @@ var definePinchZoom = function () {
                 }
             },
             firstMove = true,
+            lastTouchTime = 0,
+            TOUCH_DETECT_TIMEOUT = 1000,
 
+            updateTouchTime = function(event) {
+                if (event.type.indexOf('touch') != -1) {
+                    lastTouchTime = new Date().getTime();
+                }
+            },
+            isRealMouseEvent = function() {
+                return new Date().getTime() - lastTouchTime >= TOUCH_DETECT_TIMEOUT;
+            },
             onTouchStart = function (event) {
+                updateTouchTime(event);
                 if(target.enabled) {
                     firstMove = true;
                     fingers = event.touches.length;
@@ -886,6 +897,7 @@ var definePinchZoom = function () {
                 }
             },
             onTouchMove = function (event) {
+                updateTouchTime(event);
                 if(target.enabled && !target.isDoubleTap) {
                     if (firstMove) {
                         updateInteraction(event);
@@ -914,22 +926,29 @@ var definePinchZoom = function () {
                 }
             },
             onTouchEnd = function (event) {
+                updateTouchTime(event);
                 if(target.enabled) {
                     fingers = event.touches.length;
                     updateInteraction(event);
                 }
             },
             onMouseDown = function(event) {
-                event.touches = [event];
-                onTouchStart(event);
+                if (isRealMouseEvent()) {
+                    event.touches = [event];
+                    onTouchStart(event);
+                }
             },
             onMouseMove = function(event) {
-                event.touches = [event];
-                onTouchMove(event);
+                if (isRealMouseEvent()) {
+                    event.touches = [event];
+                    onTouchMove(event);
+                }
             },
             onMouseUp = function(event) {
-                event.touches = [];
-                onTouchEnd(event);
+                if (isRealMouseEvent()) {
+                    event.touches = [];
+                    onTouchEnd(event);
+                }
             };
 
         el.addEventListener('touchstart', onTouchStart, { passive: false });
