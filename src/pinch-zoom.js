@@ -126,6 +126,7 @@ var definePinchZoom = function () {
             animationDuration: 300,
             maxZoom: 4,
             minZoom: 0.5,
+            zoomStep: 1,
             draggableUnzoomed: true,
             lockDragAxis: false,
             setOffsetsOnce: false,
@@ -496,6 +497,31 @@ var definePinchZoom = function () {
                 updateProgress,
                 this.swing
             );
+        },
+
+        /**
+         * Zoom to the specified zoomFactor
+         */
+        zoomTo: function(zoomFactor) {
+            var startZoomFactor = this.zoomFactor,
+                center = {x: this.getContainerX() / 2, y: this.getContainerY() / 2},
+                updateProgress = (function(progress) {
+                    this.scaleTo(startZoomFactor + progress * (zoomFactor - startZoomFactor), center);
+                }).bind(this);
+            zoomFactor = Math.max(this.options.minZoom, Math.min(this.options.maxZoom, zoomFactor));
+            this.animate(this.options.animationDuration, updateProgress, this.swing);
+        },
+        /**
+         * Zoom in with one |zoomStep|.
+         */
+        zoomIn: function() {
+            this.zoomTo(this.zoomFactor + this.options.zoomStep);
+        },
+        /**
+         * Zoom out with one |zoomStep|.
+         */
+        zoomOut: function() {
+            this.zoomTo(this.zoomFactor - this.options.zoomStep);
         },
 
         /**
