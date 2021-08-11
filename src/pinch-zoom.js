@@ -502,9 +502,9 @@ var definePinchZoom = function () {
         /**
          * Zoom to the specified zoomFactor
          */
-        zoomTo: function(zoomFactor) {
+        zoomTo: function(zoomFactor, zoomCenter) {
             var startZoomFactor = this.zoomFactor,
-                center = {x: this.getContainerX() / 2, y: this.getContainerY() / 2},
+                center = zoomCenter || {x: this.getContainerX() / 2, y: this.getContainerY() / 2},
                 updateProgress = (function(progress) {
                     this.scaleTo(startZoomFactor + progress * (zoomFactor - startZoomFactor), center);
                 }).bind(this);
@@ -514,14 +514,14 @@ var definePinchZoom = function () {
         /**
          * Zoom in with one |zoomStep|.
          */
-        zoomIn: function() {
-            this.zoomTo(this.zoomFactor + this.options.zoomStep);
+        zoomIn: function(step, zoomCenter) {
+            this.zoomTo(this.zoomFactor + (step || this.options.zoomStep), zoomCenter);
         },
         /**
          * Zoom out with one |zoomStep|.
          */
-        zoomOut: function() {
-            this.zoomTo(this.zoomFactor - this.options.zoomStep);
+        zoomOut: function(step, zoomCenter) {
+            this.zoomTo(this.zoomFactor - (step || this.options.zoomStep), zoomCenter);
         },
 
         /**
